@@ -1,60 +1,90 @@
 pipeline {
     agent any
 
-    stages {
-        stage('Build') {
-            steps {
-                script {
-                    try {
-                        checkout scm
-                        sh 'docker image build -t tetris:latest .'
-                        echo 'Build stage completed successfully'
-                    } catch (Exception e) {
-                        echo 'Build stage failure'
-                        error 'Build failed'
-                    }
-                }
-            }
-        }
-        stage('Test') {
-            steps {
-                script {
-                    try {
-                        sh 'docker build -t tests -f DockerfileTest .'
-                        sh 'docker run tests > test-results.txt'
-                        def testResults = readFile('test-results.txt')
-                        echo testResults
-                        if (testResults.contains('All tests passed')) {
-                            echo 'All tests passed'
-                        } else {
-                            echo 'Some tests failed'
-                            error 'Test stage failed'
-                        }
-                    } catch (Exception e) {
-                        echo 'Testing stage failure'
-                        error 'Test failed'
-                    }
-                }
-            }
-        }
-        stage('Deploy') {
-            steps {
-                script {
-                    try {
-                        sh 'docker run -d -p 3000:3000 --name tetris tetris:latest'
-                        echo 'Deploy stage completed successfully'
-                    } catch (Exception e) {
-                        echo 'Deploy stage failure'
-                        error 'Deploy failed'
-                    }
-                }
-            }
-        }
+    triggers {
+        pollSCM("H/5 * * * *")
     }
 
-    post {
-        always {
-            echo 'Pipeline completed'
+    stages {
+        stage("Verify tooling") {
+            steps {
+                sh "docker version" 
+                sh "docker info"
+            }
+        }
+        stage("Build") {
+            steps {
+                git branch: "master", url: "https://github.com/basialx/mimstris.git"
+
+                script {
+                    def dockerBuildOutput = sh(script: "docker build -t basialx/tetris:latest .", returnStatus: true)
+                    if(dockerBuildOutput == 0) {
+                        currentBuild.result = "SUCCESS"
+                    } else {
+                        currentBuild.result = "FAILURE"
+                    }
+                }
+            }
+            post {
+                success {
+                    echo "Build stage success"
+                }
+                failure {
+                    echo "Build stage failure"
+                }
+            }
+        }
+
+        stage("Test") {
+            steps {
+                script {
+                    def testResult = sh(script: "docker image build -t basialx/test -f DockerfileTest . && docker run --name tests basialx/test", returnStatus: true)
+                    
+                    if(testResult == 0) {
+                        currentBuild.result = "SUCCESS"
+                    } 
+                    else {
+                        currentBuild.result = "FAILURE"
+                    }
+                }
+            }
+            post {
+                always {
+                    echo "Tests finished"
+                }
+                success {
+                    echo "Testing stage success"
+                }
+                failure {
+                    echo "Testing stage failure"
+                }
+            }
+        }
+        
+        stage("Deploy") {
+            steps {
+                script {
+                    def dockerRun = "docker run --name app -d -p 3000:3000 basialx/tetris"
+                    def dockerRunOutput = sh(script: dockerRun, returnStdout: true).trim()
+
+                    if(dockerRunOutput) {
+                        echo "Container run success: ${dockerRunOutput}"
+                        currentBuild.result = "SUCCESS"
+                    } 
+                    else {
+                        error "Container run failure"
+                        currentBuild.result = "FAILURE"
+                    }
+                }
+            }
+            post {
+                success {
+                    echo "Deploy stage success"
+                }
+                failure {
+                    echo "Deploy stage failure"
+                }
+            }
         }
     }
 }
