@@ -1,0 +1,18 @@
+version: "3.8"
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: tetris
+    ports:
+      - "3000:3000"
+   
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile.tests
+    image: test
+    depends_on:
+    - app
