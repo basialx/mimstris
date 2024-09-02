@@ -1,11 +1,6 @@
 pipeline {
     agent any
 
-    environment {
-        // Dodajemy ścieżkę do Dockera
-        PATH = "/usr/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-    }
-
     triggers {
         pollSCM("H/5 * * * *")
     }
@@ -13,18 +8,17 @@ pipeline {
     stages {
         stage("Verify tooling") {
             steps {
-                sh "docker version"
-                sh "docker info"
+                sh "/usr/bin/docker version"
+                sh "/usr/bin/docker info"
             }
         }
-
         stage("Build") {
             steps {
                 git branch: "master", url: "https://github.com/basialx/mimstris.git"
 
                 script {
-                    def dockerBuildOutput = sh(script: "docker build -t basialx/tetris:latest .", returnStatus: true)
-                    if(dockerBuildOutput == 0) {
+                    def dockerBuildOutput = sh(script: "/usr/bin/docker build -t basialx/tetris:latest .", returnStatus: true)
+                    if (dockerBuildOutput == 0) {
                         currentBuild.result = "SUCCESS"
                     } else {
                         currentBuild.result = "FAILURE"
@@ -44,8 +38,8 @@ pipeline {
         stage("Test") {
             steps {
                 script {
-                    def testResult = sh(script: "docker build -t basialx/test -f DockerfileTest . && docker run --rm basialx/test", returnStatus: true)
-                    if(testResult == 0) {
+                    def testResult = sh(script: "/usr/bin/docker build -t basialx/test -f DockerfileTest . && /usr/bin/docker run --rm basialx/test", returnStatus: true)
+                    if (testResult == 0) {
                         currentBuild.result = "SUCCESS"
                     } else {
                         currentBuild.result = "FAILURE"
@@ -68,10 +62,10 @@ pipeline {
         stage("Deploy") {
             steps {
                 script {
-                    def dockerRun = "docker run --name app -d -p 3000:3000 basialx/tetris"
+                    def dockerRun = "/usr/bin/docker run --name app -d -p 3000:3000 basialx/tetris"
                     def dockerRunOutput = sh(script: dockerRun, returnStdout: true).trim()
 
-                    if(dockerRunOutput) {
+                    if (dockerRunOutput) {
                         echo "Container run success: ${dockerRunOutput}"
                         currentBuild.result = "SUCCESS"
                     } else {
