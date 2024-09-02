@@ -1,6 +1,9 @@
 pipeline {
     agent any
 
+    environment {
+        PATH = "/usr/bin:/bin:/usr/sbin:/sbin"
+    }
     triggers {
         pollSCM("H/5 * * * *")
     }
