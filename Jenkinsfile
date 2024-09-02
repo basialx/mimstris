@@ -1,6 +1,11 @@
 pipeline {
     agent any
 
+    environment {
+        // Dodajemy ścieżkę do Dockera
+        PATH = "/usr/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+    }
+
     triggers {
         pollSCM("H/5 * * * *")
     }
@@ -8,10 +13,11 @@ pipeline {
     stages {
         stage("Verify tooling") {
             steps {
-                sh "docker version" 
+                sh "docker version"
                 sh "docker info"
             }
         }
+
         stage("Build") {
             steps {
                 git branch: "master", url: "https://github.com/basialx/mimstris.git"
@@ -38,12 +44,10 @@ pipeline {
         stage("Test") {
             steps {
                 script {
-                    def testResult = sh(script: "docker image build -t basialx/test -f DockerfileTest . && docker run --name tests basialx/test", returnStatus: true)
-                    
+                    def testResult = sh(script: "docker build -t basialx/test -f DockerfileTest . && docker run --rm basialx/test", returnStatus: true)
                     if(testResult == 0) {
                         currentBuild.result = "SUCCESS"
-                    } 
-                    else {
+                    } else {
                         currentBuild.result = "FAILURE"
                     }
                 }
@@ -60,7 +64,7 @@ pipeline {
                 }
             }
         }
-        
+
         stage("Deploy") {
             steps {
                 script {
@@ -70,8 +74,7 @@ pipeline {
                     if(dockerRunOutput) {
                         echo "Container run success: ${dockerRunOutput}"
                         currentBuild.result = "SUCCESS"
-                    } 
-                    else {
+                    } else {
                         error "Container run failure"
                         currentBuild.result = "FAILURE"
                     }
