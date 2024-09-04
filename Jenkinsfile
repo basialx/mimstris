@@ -16,30 +16,17 @@ pipeline {
         }
         stage("Verify tooling") {
             steps {
-                sh "sudo /usr/bin/docker version"
-                sh "sudo /usr/bin/docker info"
+                sh "/usr/bin/docker version"
+                sh "/usr/bin/docker info"
             }
 	   
-        }
-	stage("Test Sudo Access") {
-            steps {
-                script {
-                    def sudoTest = sh(script: "sudo whoami", returnStatus: true)
-                    if (sudoTest == 0) {
-                        echo "Sudo is working for Jenkins"
-                    } else {
-                        echo "Sudo is not working for Jenkins"
-                        currentBuild.result = "FAILURE"
-                    }
-                }
-            }
-        }
+   }
         stage("Build") {
             steps {
                 git branch: "master", url: "https://github.com/basialx/mimstris.git"
 
                 script {
-                    def dockerBuildOutput = sh(script: "sudo /usr/bin/docker build -t basialx/tetris:latest .", returnStatus: true)
+                    def dockerBuildOutput = sh(script: "/usr/bin/docker build -t basialx/tetris:latest .", returnStatus: true)
                     if(dockerBuildOutput == 0) {
                         currentBuild.result = "SUCCESS"
                     } else {
@@ -60,7 +47,7 @@ pipeline {
         stage("Test") {
             steps {
                 script {
-                    def testResult = sh(script: "sudo /usr/bin/docker build -t basialx/test -f DockerfileTest . && /usr/bin/docker run", returnStatus: true)
+                    def testResult = sh(script: "/usr/bin/docker build -t basialx/test -f DockerfileTest . && /usr/bin/docker run", returnStatus: true)
 
                     if(testResult == 0) {
                         currentBuild.result = "SUCCESS"
@@ -85,7 +72,7 @@ pipeline {
         stage("Deploy") {
             steps {
                 script {
-                    def dockerRun = "sudo /usr/bin/docker run --name app -d -p 3000:3000 basialx/tetris"
+                    def dockerRun = "/usr/bin/docker run --name app -d -p 3000:3000 basialx/tetris"
                     def dockerRunOutput = sh(script: dockerRun, returnStdout: true).trim()
 
                     if(dockerRunOutput) {
