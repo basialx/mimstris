@@ -20,6 +20,19 @@ pipeline {
                 sh "/usr/bin/docker info"
             }
         }
+	stage("Test Sudo Access") {
+            steps {
+                script {
+                    def sudoTest = sh(script: "sudo whoami", returnStatus: true)
+                    if (sudoTest == 0) {
+                        echo "Sudo is working for Jenkins"
+                    } else {
+                        echo "Sudo is not working for Jenkins"
+                        currentBuild.result = "FAILURE"
+                    }
+                }
+            }
+        }
         stage("Build") {
             steps {
                 git branch: "master", url: "https://github.com/basialx/mimstris.git"
