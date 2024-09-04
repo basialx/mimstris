@@ -19,6 +19,9 @@ pipeline {
                 sh "/usr/bin/docker version"
                 sh "/usr/bin/docker info"
             }
+	    steps {
+        sh 'sudo /usr/bin/docker version'
+    }
         }
 	stage("Test Sudo Access") {
             steps {
