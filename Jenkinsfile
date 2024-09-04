@@ -3,6 +3,7 @@ pipeline {
 
     environment {
         PATH = "/usr/bin:/bin:/usr/sbin:/sbin"
+	DOCKER_HOST = 'tcp://docker-dind:2375'
     }
     triggers {
         pollSCM("H/5 * * * *")
@@ -12,6 +13,10 @@ pipeline {
         stage("Verify PATH") {
             steps {
                 sh "echo \$PATH"
+            }
+        }stage('Checkout') {
+            steps {
+                checkout scm
             }
         }
         stage("Verify tooling") {
