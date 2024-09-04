@@ -25,7 +25,7 @@ pipeline {
                 git branch: "master", url: "https://github.com/basialx/mimstris.git"
 
                 script {
-                    def dockerBuildOutput = sh(script: "/usr/bin/docker build -t basialx/tetris:latest .", returnStatus: true)
+                    def dockerBuildOutput = sh(script: "sudo /usr/bin/docker build -t basialx/tetris:latest .", returnStatus: true)
                     if(dockerBuildOutput == 0) {
                         currentBuild.result = "SUCCESS"
                     } else {
@@ -46,7 +46,7 @@ pipeline {
         stage("Test") {
             steps {
                 script {
-                    def testResult = sh(script: "/usr/bin/docker build -t basialx/test -f DockerfileTest . && /usr/bin/docker run", returnStatus: true)
+                    def testResult = sh(script: "sudo /usr/bin/docker build -t basialx/test -f DockerfileTest . && /usr/bin/docker run", returnStatus: true)
 
                     if(testResult == 0) {
                         currentBuild.result = "SUCCESS"
@@ -71,7 +71,7 @@ pipeline {
         stage("Deploy") {
             steps {
                 script {
-                    def dockerRun = "/usr/bin/docker run --name app -d -p 3000:3000 basialx/tetris"
+                    def dockerRun = "sudo /usr/bin/docker run --name app -d -p 3000:3000 basialx/tetris"
                     def dockerRunOutput = sh(script: dockerRun, returnStdout: true).trim()
 
                     if(dockerRunOutput) {
