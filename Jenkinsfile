@@ -16,12 +16,10 @@ pipeline {
         }
         stage("Verify tooling") {
             steps {
-                sh "/usr/bin/docker version"
-                sh "/usr/bin/docker info"
+                sh "sudo /usr/bin/docker version"
+                sh "sudo /usr/bin/docker info"
             }
-	    steps {
-        sh 'sudo /usr/bin/docker version'
-    }
+	   
         }
 	stage("Test Sudo Access") {
             steps {
